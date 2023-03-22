@@ -1,0 +1,69 @@
+name: besslogic
+services:
+  web:
+    image: nginx
+    networks:
+      - backend
+    ports:
+      - '80:80'
+    volumes:
+      - ./web/default.conf:/etc/nginx/templates/default.conf.template
+    depends_on:
+      - frontend
+      - backend
+    secrets:
+      - certs.pub
+      - certs.key
+  db:
+    image: mariadb:10
+    networks:
+      - backend
+    environment:
+      - MARIADB_ROOT_PASSWORD=aircrafts123
+      - MARIADB_DATABASE=aircrafts
+      - MARIADB_USER=aircrafts
+      - MARIADB_PASSWORD=aircrafts123
+      - MARIADB_INITDB_SKIP_TZINFO=true
+  frontend:
+    image: node:19
+    user: node
+    env_file:
+      - local.frontend.env
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    command: ['npm', 'run', 'start']
+    tty: true
+    stdin_open: true
+    expose:
+      - '4200'
+    networks:
+      - backend
+  backend:
+    image: mcr.microsoft.com/dotnet/sdk:7.0
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    command: ['dotnet', 'watch', 'run']
+    tty: true
+    stdin_open: true
+    expose:
+      - '5223'
+    networks:
+      - backend
+    depends_on:
+      - db
+    secrets:
+      - source: user_secrets
+        target: /root/.microsoft/usersecrets/bc76c726-4b3f-4bd4-8a7e-289bb1a5387c/secrets.json
+
+networks:
+  backend:
+
+secrets:
+  user_secrets:
+    file: ~/.microsoft/usersecrets/bc76c726-4b3f-4bd4-8a7e-289bb1a5387c/secrets.json
+  certs.pub:
+    file: ./web/besslogic.local.pem
+  certs.key:
+    file: ./web/besslogic.local-key.pem
