@@ -15,15 +15,11 @@ services:
       - certs.pub
       - certs.key
   db:
-    image: mariadb:10
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    env_file:
+      - local.db.env
     networks:
       - backend
-    environment:
-      - MARIADB_ROOT_PASSWORD=aircrafts123
-      - MARIADB_DATABASE=aircrafts
-      - MARIADB_USER=aircrafts
-      - MARIADB_PASSWORD=aircrafts123
-      - MARIADB_INITDB_SKIP_TZINFO=true
   frontend:
     image: node:19
     user: node
@@ -53,16 +49,11 @@ services:
       - backend
     depends_on:
       - db
-    secrets:
-      - source: user_secrets
-        target: /root/.microsoft/usersecrets/bc76c726-4b3f-4bd4-8a7e-289bb1a5387c/secrets.json
 
 networks:
   backend:
 
 secrets:
-  user_secrets:
-    file: ~/.microsoft/usersecrets/bc76c726-4b3f-4bd4-8a7e-289bb1a5387c/secrets.json
   certs.pub:
     file: ./web/besslogic.local.pem
   certs.key:
